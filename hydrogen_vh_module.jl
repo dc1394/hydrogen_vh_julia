@@ -2,8 +2,10 @@ module Hydrogen_Vh
     using LinearAlgebra
     
     struct Hydrogen_Vh_param
-        RESULT_FILENAME::String
+        ELE_TOTAL::Int64
         INTEGTABLENUM::Int64
+        NODE_TOTAL::Int64
+        RESULT_FILENAME::String
     end
 
     mutable struct Hydrogen_Vh_variables
