@@ -1,7 +1,7 @@
-module Hydrogen_FEM
+module Hydrogen_FEM_module
     struct Hydrogen_FEM_param
-        NODE_TOTAL::Int64
         ELE_TOTAL::Int64
+        NODE_TOTAL::Int64
         R_MAX::Float64
         R_MIN::Float64
     end

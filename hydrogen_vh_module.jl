@@ -1,10 +1,8 @@
-module Hydrogen_Vh
+module Hydrogen_Vh_module
     using LinearAlgebra
     
     struct Hydrogen_Vh_param
-        ELE_TOTAL::Int64
         INTEGTABLENUM::Int64
-        NODE_TOTAL::Int64
         RESULT_FILENAME::String
     end
 

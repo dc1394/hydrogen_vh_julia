@@ -5,19 +5,20 @@ module Hydrogen_Vh
     using LinearAlgebra
     using Match
     using Printf
+    using .Hydrogen_Vh_module
 
     function construct(hfem_param)
-        vh_param = Hydrogen_Vh.Hydrogen_Vh_param(hfem_param.ELE_TOTAL - 1, 100, hfem_param.NODE_TOTAL - 1, "result.csv")
+        vh_param = Hydrogen_Vh_module.Hydrogen_Vh_param(100, "result.csv")
 
         tmp_dv = zeros(1)
         tmp_ev = zeros(0)
         
-        vh_val =  Hydrogen_Vh.Hydrogen_Vh_variables(
-            zeros(vh_param.ELE_TOTAL, 2, 2),
+        vh_val =  Hydrogen_Vh_module.Hydrogen_Vh_variables(
+            zeros(hfem_param.ELE_TOTAL, 2, 2),
             SymTridiagonal(tmp_dv, tmp_ev),
-            zeros(vh_param.NODE_TOTAL),
-            zeros(vh_param.ELE_TOTAL, 2),
-            zeros(vh_param.NODE_TOTAL),
+            zeros(hfem_param.NODE_TOTAL),
+            zeros(hfem_param.ELE_TOTAL, 2),
+            zeros(hfem_param.NODE_TOTAL),
             zeros(vh_param.INTEGTABLENUM),
             zeros(vh_param.INTEGTABLENUM))
         
@@ -31,10 +32,10 @@ module Hydrogen_Vh
         make_element_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
 
         # 全体行列と全体ベクトルを生成
-        tmp_dv, tmp_ev = make_global_matrix_and_vector(hfem_val, vh_param, vh_val)
+        tmp_dv, tmp_ev = make_global_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
 
         # 境界条件処理
-        boundary_conditions(vh_param, vh_val, tmp_dv, tmp_ev)
+        boundary_conditions(vh_param, vh_val, hfem_param, tmp_dv, tmp_ev)
 
         #// 連立方程式を解く
         vh_val.ug = vh_val.mat_A_glo \ vh_val.vec_b_glo
@@ -42,14 +43,14 @@ module Hydrogen_Vh
 
     save_result(hfem_val, vh_val) = let
         open("result.csv", "w" ) do fp
-            for i = 2:length(hfem_val.node_r_glo) - 1
+            for i = 2:length(hfem_val.node_r_glo)
                 r = hfem_val.node_r_glo[i]
                 println(fp, @sprintf "%.14f, %.14f, %.14f" (r) (vh_val.ug[i] / r) (- (1.0 + 1.0 / r) * exp(-2.0 * r) + 1.0 / r))
             end
         end
     end
     
-    function boundary_conditions(vh_param, vh_val, tmp_dv, tmp_ev)
+    function boundary_conditions(vh_param, vh_val, hfem_param, tmp_dv, tmp_ev)
         a = 0.0;
         tmp_dv[1] = 1.0
         vh_val.vec_b_glo[1] = a;
@@ -57,10 +58,10 @@ module Hydrogen_Vh
         tmp_ev[1] = 0.0;
     
         b = 1.0;
-        tmp_dv[vh_param.NODE_TOTAL] = 1.0;
-        vh_val.vec_b_glo[vh_param.NODE_TOTAL] = b;
-        vh_val.vec_b_glo[vh_param.NODE_TOTAL - 1] -= b * tmp_ev[vh_param.NODE_TOTAL - 1]
-        tmp_ev[vh_param.NODE_TOTAL - 1] = 0.0;
+        tmp_dv[hfem_param.NODE_TOTAL] = 1.0;
+        vh_val.vec_b_glo[hfem_param.NODE_TOTAL] = b;
+        vh_val.vec_b_glo[hfem_param.NODE_TOTAL - 1] -= b * tmp_ev[hfem_param.NODE_TOTAL - 1]
+        tmp_ev[hfem_param.NODE_TOTAL - 1] = 0.0;
 
         vh_val.mat_A_glo = SymTridiagonal(tmp_dv, tmp_ev)
     end
@@ -76,7 +77,7 @@ module Hydrogen_Vh
 
     function make_element_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
         # 要素行列とLocal節点ベクトルの各成分を計算
-        for e = 1:vh_param.ELE_TOTAL
+        for e = 1:hfem_param.ELE_TOTAL
             for i = 1:2
                 for j = 1:2
                     vh_val.mat_A_ele[e, i, j] = (-1) ^ i * (-1) ^ j / hfem_val.length[e]
@@ -100,12 +101,12 @@ module Hydrogen_Vh
         end
     end
 
-    function make_global_matrix_and_vector(hfem_val, vh_param, vh_val)
-        tmp_dv = zeros(vh_param.NODE_TOTAL)
-        tmp_ev = zeros(vh_param.NODE_TOTAL - 1)
+    function make_global_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
+        tmp_dv = zeros(hfem_param.NODE_TOTAL)
+        tmp_ev = zeros(hfem_param.NODE_TOTAL - 1)
 
         # 全体行列と全体ベクトルを生成
-        for e = 1:vh_param.ELE_TOTAL
+        for e = 1:hfem_param.ELE_TOTAL
             for i = 1:2
                 for j = 1:2
                     if hfem_val.node_num_seg[e, i] == hfem_val.node_num_seg[e, j]
