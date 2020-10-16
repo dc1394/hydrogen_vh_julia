@@ -8,8 +8,8 @@ module Hydrogen_FEM
 
     function construct()
         param = Hydrogen_FEM_module.Hydrogen_FEM_param(NODE_TOTAL - 1, NODE_TOTAL, 30.0, 0.0)
-        val =  Hydrogen_FEM_module.Hydrogen_FEM_variables(
-            Symmetric(zeros(param.NODE_TOTAL, param.NODE_TOTAL)),
+        val = Hydrogen_FEM_module.Hydrogen_FEM_variables(
+            Symmetric(zeros(param.ELE_TOTAL, param.ELE_TOTAL)),
             zeros(param.ELE_TOTAL),
             zeros(param.ELE_TOTAL, 2, 2),
             zeros(param.ELE_TOTAL, 2, 2),
@@ -17,7 +17,7 @@ module Hydrogen_FEM
             zeros(param.ELE_TOTAL, 2),
             zeros(param.NODE_TOTAL),
             zeros(param.NODE_TOTAL),
-            Symmetric(zeros(param.NODE_TOTAL, param.NODE_TOTAL)))
+            Symmetric(zeros(param.ELE_TOTAL, param.ELE_TOTAL)))
         
         return param, val
     end
@@ -30,10 +30,10 @@ module Hydrogen_FEM
         make_element_matrix!(param, val)
 
         # 全体行列を生成
-        make_global_matrix!(param, val)
+        hg_tmp, ug_tmp = make_global_matrix(param, val)
 
         # 境界条件処理を行う
-        boundary_conditions!(val)
+        boundary_conditions!(param, val, hg_tmp, ug_tmp)
 
         # 一般化固有値問題を解く
         eigenval, phi = eigen(val.hg, val.ug)
@@ -71,12 +71,18 @@ module Hydrogen_FEM
         return tmp * tmp;
     end
 
-    function boundary_conditions!(val)
-        # 左辺の全体行列のN + 1行とN + 1列を削る
-        val.hg = val.hg[1 : end - 1, 1 : end - 1]
+    function boundary_conditions!(param, val, hg_tmp, ug_tmp)
+        @inbounds for i = 1:param.ELE_TOTAL
+            for j = i - 1:i + 1
+                if j != 0 && j != param.NODE_TOTAL
+                    # 左辺の全体行列のN行とN列を削る
+                    val.hg.data[j, i] = hg_tmp.data[j, i]
 
-        # 右辺の全体行列のN + 1行とN + 1列を削る
-        val.ug = val.ug[1 : end - 1, 1 : end - 1]
+                    # 右辺の全体行列のN行とN列を削る    
+                    val.ug.data[j, i] = ug_tmp.data[j, i]
+                end
+            end
+        end
     end
 
     get_A_matrix_element(e, le, p, q) = let
@@ -154,20 +160,25 @@ module Hydrogen_FEM
                 for j = 1:2
                     val.mat_A_ele[e, i, j] = get_A_matrix_element(e, le, i, j)
                     val.mat_B_ele[e, i, j] = get_B_matrix_element(e, le, i, j)
-                    end
+                end
+            end
+        end
+    end
+    
+    function make_global_matrix(param, val)
+        hg_tmp = Symmetric(zeros(param.NODE_TOTAL, param.NODE_TOTAL))
+        ug_tmp = Symmetric(zeros(param.NODE_TOTAL, param.NODE_TOTAL))
+
+        for e = 1:param.ELE_TOTAL
+            for i = 1:2
+                for j = 1:2
+                    hg_tmp.data[val.node_num_seg[e, i], val.node_num_seg[e, j]] += val.mat_A_ele[e, i, j]
+                    ug_tmp.data[val.node_num_seg[e, i], val.node_num_seg[e, j]] += val.mat_B_ele[e, i, j]
                 end
             end
         end
 
-    function make_global_matrix!(param, val)
-        for e = 1:param.ELE_TOTAL
-            for i = 1:2
-                for j = 1:2
-                    val.hg[val.node_num_seg[e, i], val.node_num_seg[e, j]] += val.mat_A_ele[e, i, j]
-                    val.ug[val.node_num_seg[e, i], val.node_num_seg[e, j]] += val.mat_B_ele[e, i, j]
-                end
-            end
-        end
+        return hg_tmp, ug_tmp
     end
 
     function normalize!(val)

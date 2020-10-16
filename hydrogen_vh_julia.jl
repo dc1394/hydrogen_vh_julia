@@ -9,13 +9,9 @@ module Hydrogen_Vh
 
     function construct(hfem_param)
         vh_param = Hydrogen_Vh_module.Hydrogen_Vh_param(100, "result.csv")
-
-        tmp_dv = zeros(1)
-        tmp_ev = zeros(0)
-        
         vh_val =  Hydrogen_Vh_module.Hydrogen_Vh_variables(
             zeros(hfem_param.ELE_TOTAL, 2, 2),
-            SymTridiagonal(tmp_dv, tmp_ev),
+            SymTridiagonal(zeros(1), zeros(0)),
             zeros(hfem_param.NODE_TOTAL),
             zeros(hfem_param.ELE_TOTAL, 2),
             zeros(hfem_param.NODE_TOTAL),
