@@ -23,17 +23,17 @@ module Hydrogen_Vh
         return vh_param, vh_val
     end
 
-    function do_run(hfem_param, hfem_val, vh_param, vh_val)
+    function do_run(hfem_param, hfem_val, vh_val)
         # 要素行列とLocal節点ベクトルを生成
-        make_element_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
+        make_element_matrix_and_vector(hfem_param, hfem_val, vh_val)
 
         # 全体行列と全体ベクトルを生成
-        tmp_dv, tmp_ev = make_global_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
+        tmp_dv, tmp_ev = make_global_matrix_and_vector(hfem_param, hfem_val, vh_val)
 
         # 境界条件処理
-        boundary_conditions(vh_param, vh_val, hfem_param, tmp_dv, tmp_ev)
+        boundary_conditions(vh_val, hfem_param, tmp_dv, tmp_ev)
 
-        #// 連立方程式を解く
+        # 連立方程式を解く
         vh_val.ug = vh_val.mat_A_glo \ vh_val.vec_b_glo
     end
 
@@ -46,7 +46,7 @@ module Hydrogen_Vh
         end
     end
     
-    function boundary_conditions(vh_param, vh_val, hfem_param, tmp_dv, tmp_ev)
+    function boundary_conditions(vh_val, hfem_param, tmp_dv, tmp_ev)
         a = 0.0;
         tmp_dv[1] = 1.0
         vh_val.vec_b_glo[1] = a;
@@ -71,7 +71,7 @@ module Hydrogen_Vh
         return s * xr;
     end
 
-    function make_element_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
+    function make_element_matrix_and_vector(hfem_param, hfem_val, vh_val)
         # 要素行列とLocal節点ベクトルの各成分を計算
         for e = 1:hfem_param.ELE_TOTAL
             for i = 1:2
@@ -97,7 +97,7 @@ module Hydrogen_Vh
         end
     end
 
-    function make_global_matrix_and_vector(hfem_param, hfem_val, vh_param, vh_val)
+    function make_global_matrix_and_vector(hfem_param, hfem_val, vh_val)
         tmp_dv = zeros(hfem_param.NODE_TOTAL)
         tmp_ev = zeros(hfem_param.NODE_TOTAL - 1)
 
