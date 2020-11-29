@@ -5,18 +5,19 @@ module Hydrogen_Vh
     using LinearAlgebra
     using Match
     using Printf
+    using .Hydrogen_FEM
     using .Hydrogen_Vh_module
 
     function construct(hfem_param)
         vh_param = Hydrogen_Vh_module.Hydrogen_Vh_param(100, "result.csv")
-        vh_val =  Hydrogen_Vh_module.Hydrogen_Vh_variables(
-            zeros(hfem_param.ELE_TOTAL, 2, 2),
-            SymTridiagonal(zeros(1), zeros(0)),
-            zeros(hfem_param.NODE_TOTAL),
-            zeros(hfem_param.ELE_TOTAL, 2),
-            zeros(hfem_param.NODE_TOTAL),
-            zeros(vh_param.INTEGTABLENUM),
-            zeros(vh_param.INTEGTABLENUM))
+        vh_val = Hydrogen_Vh_module.Hydrogen_Vh_variables(
+            Array{Float64}(undef, hfem_param.ELE_TOTAL, 2, 2),
+            SymTridiagonal(Array{Float64}(undef, hfem_param.NODE_TOTAL), Array{Float64}(undef, hfem_param.NODE_TOTAL - 1)),
+            Array{Float64}(undef, hfem_param.NODE_TOTAL),
+            Array{Float64}(undef, hfem_param.ELE_TOTAL, 2),
+            Array{Float64}(undef, hfem_param.NODE_TOTAL),
+            Array{Float64}(undef, vh_param.INTEGTABLENUM),
+            Array{Float64}(undef, vh_param.INTEGTABLENUM))
         
         vh_val.x, vh_val.w = gausslegendre(vh_param.INTEGTABLENUM)
 
@@ -37,8 +38,8 @@ module Hydrogen_Vh
         vh_val.ug = vh_val.mat_A_glo \ vh_val.vec_b_glo
     end
 
-    save_result(hfem_val, vh_val) = let
-        open("result.csv", "w" ) do fp
+    save_result(hfem_val, vh_param, vh_val) = let
+        open(vh_param.RESULT_FILENAME, "w" ) do fp
             for i = 2:length(hfem_val.node_r_glo)
                 r = hfem_val.node_r_glo[i]
                 println(fp, @sprintf "%.14f, %.14f, %.14f" (r) (vh_val.ug[i] / r) (- (1.0 + 1.0 / r) * exp(-2.0 * r) + 1.0 / r))
