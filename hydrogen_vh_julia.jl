@@ -74,7 +74,7 @@ module Hydrogen_Vh
 
     function make_element_matrix_and_vector(hfem_param, hfem_val, vh_val)
         # 要素行列とLocal節点ベクトルの各成分を計算
-        for e = 1:hfem_param.ELE_TOTAL
+        @inbounds for e = 1:hfem_param.ELE_TOTAL
             for i = 1:2
                 for j = 1:2
                     vh_val.mat_A_ele[e, i, j] = (-1) ^ i * (-1) ^ j / hfem_val.length[e]
@@ -103,7 +103,7 @@ module Hydrogen_Vh
         tmp_ev = zeros(hfem_param.NODE_TOTAL - 1)
 
         # 全体行列と全体ベクトルを生成
-        for e = 1:hfem_param.ELE_TOTAL
+        @inbounds for e = 1:hfem_param.ELE_TOTAL
             for i = 1:2
                 for j = 1:2
                     if hfem_val.node_num_seg[e, i] == hfem_val.node_num_seg[e, j]

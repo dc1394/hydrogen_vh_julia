@@ -56,7 +56,7 @@ module Hydrogen_FEM
         khi = max;
 
         # 表の中の正しい位置を二分探索で求める
-        while khi - klo > 1
+        @inbounds while khi - klo > 1
             k = (khi + klo) >> 1
 
             if val.node_r_glo[k] > r
@@ -130,17 +130,17 @@ module Hydrogen_FEM
     function make_data!(param, val)
         # Global節点のx座標を定義(R_MIN～R_MAX）
         dr = (param.R_MAX - param.R_MIN) / float(param.ELE_TOTAL)
-        for i = 0:param.NODE_TOTAL - 1
+        @inbounds for i = 0:param.NODE_TOTAL - 1
             # 計算領域を等分割
             val.node_r_glo[i + 1] = param.R_MIN + float(i) * dr
         end
 
-        for e = 1:param.ELE_TOTAL
+        @inbounds for e = 1:param.ELE_TOTAL
             val.node_num_seg[e, 1] = e
             val.node_num_seg[e, 2] = e + 1
         end
             
-        for e = 1:param.ELE_TOTAL
+        @inbounds for e = 1:param.ELE_TOTAL
             for i = 1:2
                 val.node_r_ele[e, i] = val.node_r_glo[val.node_num_seg[e, i]]
             end
@@ -149,12 +149,12 @@ module Hydrogen_FEM
 
     function make_element_matrix!(param, val)
         # 各線分要素の長さを計算
-        for e = 1:param.ELE_TOTAL
+        @inbounds for e = 1:param.ELE_TOTAL
             val.length[e] = abs(val.node_r_ele[e, 2] - val.node_r_ele[e, 1])
         end
 
         # 要素行列の各成分を計算
-        for e = 1:param.ELE_TOTAL
+        @inbounds for e = 1:param.ELE_TOTAL
             le = val.length[e]
             for i = 1:2
                 for j = 1:2
@@ -169,7 +169,7 @@ module Hydrogen_FEM
         hg_tmp = Symmetric(zeros(param.NODE_TOTAL, param.NODE_TOTAL))
         ug_tmp = Symmetric(zeros(param.NODE_TOTAL, param.NODE_TOTAL))
 
-        for e = 1:param.ELE_TOTAL
+        @inbounds for e = 1:param.ELE_TOTAL
             for i = 1:2
                 for j = 1:2
                     hg_tmp.data[val.node_num_seg[e, i], val.node_num_seg[e, j]] += val.mat_A_ele[e, i, j]
