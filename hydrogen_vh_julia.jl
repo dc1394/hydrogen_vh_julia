@@ -47,17 +47,17 @@ module Hydrogen_Vh
     end
     
     function boundary_conditions(vh_param, vh_val, hfem_param, tmp_dv, tmp_ev)
-        a = 0.0;
+        a = 0.0
         tmp_dv[1] = 1.0
-        vh_val.vec_b_glo[1] = a;
-        vh_val.vec_b_glo[2] -= a * tmp_ev[1];
-        tmp_ev[1] = 0.0;
+        vh_val.vec_b_glo[1] = a
+        vh_val.vec_b_glo[2] -= a * tmp_ev[1]
+        tmp_ev[1] = 0.0
     
-        b = 1.0;
-        tmp_dv[hfem_param.NODE_TOTAL] = 1.0;
-        vh_val.vec_b_glo[hfem_param.NODE_TOTAL] = b;
+        b = 450.0
+        tmp_dv[hfem_param.NODE_TOTAL] = 1.0
+        vh_val.vec_b_glo[hfem_param.NODE_TOTAL] = b
         vh_val.vec_b_glo[hfem_param.NODE_TOTAL - 1] -= b * tmp_ev[hfem_param.NODE_TOTAL - 1]
-        tmp_ev[hfem_param.NODE_TOTAL - 1] = 0.0;
+        tmp_ev[hfem_param.NODE_TOTAL - 1] = 0.0
 
         vh_val.mat_A_glo = SymTridiagonal(tmp_dv, tmp_ev)
     end
