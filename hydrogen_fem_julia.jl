@@ -2,6 +2,7 @@ module Hydrogen_FEM
     include("hydrogen_fem_module.jl")
     using LinearAlgebra
     using Match
+    using MKL
     using .Hydrogen_FEM_module
 
     const NODE_TOTAL = 5000
