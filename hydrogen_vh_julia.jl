@@ -83,12 +83,12 @@ module Hydrogen_Vh
 
                 vh_val.vec_b_ele[e, i] =
                     @match i begin
-                        1 => -gl_integ(r -> -r * Hydrogen_FEM.rho(hfem_param, hfem_val, r) * (hfem_val.node_r_ele[e, 2] - r) / hfem_val.length[e],
+                        1 => gl_integ(r -> r * Hydrogen_FEM.rho(hfem_param, hfem_val, r) * (hfem_val.node_r_ele[e, 2] - r) / hfem_val.length[e],
                                 hfem_val.node_r_ele[e, 1],
                                 hfem_val.node_r_ele[e, 2],
                                 vh_val)
                         
-                        2 => -gl_integ(r -> -r * Hydrogen_FEM.rho(hfem_param, hfem_val, r) * (r - hfem_val.node_r_ele[e, 1]) / hfem_val.length[e],
+                        2 => gl_integ(r -> r * Hydrogen_FEM.rho(hfem_param, hfem_val, r) * (r - hfem_val.node_r_ele[e, 1]) / hfem_val.length[e],
                                 hfem_val.node_r_ele[e, 1],
                                 hfem_val.node_r_ele[e, 2],
                                 vh_val)
